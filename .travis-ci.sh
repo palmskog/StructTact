@@ -7,7 +7,7 @@ popd
 if [ -z "$DOWNSTREAM" ]; then
     ./build.sh
 else
-    BUILD_CMD="${BUILD_CMD:-./travis-ci.sh}"
+    BUILD_CMD="${BUILD_CMD:-./.travis-ci.sh}"
     pushd ..
     git clone $DOWNSTREAM downstream
     cd downstream
