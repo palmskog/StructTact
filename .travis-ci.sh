@@ -4,4 +4,12 @@ tar xf coq-8.5-build-local.tgz
 export PATH=$PWD/coq-8.5/bin:$PATH
 popd
 
-./build.sh
+if [ -z "$DOWNSTREAM" ]; then
+    ./build.sh
+else
+    BUILD_CMD="${BUILD_CMD:-./travis-ci.sh}"
+    pushd ..
+    git clone $DOWNSTREAM downstream
+    cd dep
+    $BUILD_CMD
+fi
