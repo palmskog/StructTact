@@ -10,6 +10,6 @@ else
     BUILD_CMD="${BUILD_CMD:-./travis-ci.sh}"
     pushd ..
     git clone $DOWNSTREAM downstream
-    cd dep
+    cd downstream
     $BUILD_CMD
 fi
