@@ -13,20 +13,21 @@ Fixpoint fin (n : nat) : Type :=
   end.
 
 Fixpoint fin_eq_dec (n : nat) : forall (a b : fin n), {a = b} + {a <> b}.
-  refine match n with
-    | 0 => fun a b : fin 0 => right (match b with end)
-    | S n' => fun a b : fin (S n') =>
-               match a, b with
-                 | Some a', Some b' =>
-                   match fin_eq_dec n' a' b' with
-                     | left _ H => left _
-                     | right _ H => right _
-                   end
-                 | Some a', None => right _
-                 | None, Some b' => right _
-                 | None, None => left _
-               end
-  end; congruence.
+  refine
+   (match n with
+      | 0 => fun a b : fin 0 => right (match b with end)
+      | S n' => fun a b : fin (S n') =>
+                 match a, b with
+                   | Some a', Some b' =>
+                     match fin_eq_dec n' a' b' with
+                       | left _ _ => left _
+                       | right _ _ => right _
+                     end
+                   | Some a', None => right _
+                   | None, Some b' => right _
+                   | None, None => left eq_refl
+                 end
+    end); congruence.
 Defined.
 
 Fixpoint all_fin (n : nat) : list (fin n) :=
@@ -161,7 +162,8 @@ Proof.
   intuition.
 Qed.
 
-Lemma fin_lt_strorder : forall n, StrictOrder (@fin_lt n).
+Lemma fin_lt_strorder :
+  forall n, StrictOrder (@fin_lt n).
 Proof.
   intros.
   apply (Build_StrictOrder _ (@fin_lt_irrefl n) (@fin_lt_trans n)).
@@ -220,9 +222,10 @@ Fixpoint fin_comparison_dec (n : nat) :
   end.
 
 Definition fin_comparison (n : nat) (x y : fin n) : comparison :=
-match fin_comparison_dec n x y with exist _ cmp _ => cmp end.
+  match fin_comparison_dec n x y with exist _ cmp _ => cmp end.
 
-Lemma fin_compare_spec : forall (n : nat) (x y : fin n), 
+Lemma fin_compare_spec :
+  forall (n : nat) (x y : fin n),
     CompSpec eq fin_lt x y (fin_comparison n x y).
 Proof.
   intros.
@@ -244,22 +247,25 @@ Module fin_OT (N : NatValue) <: OrderedType.
 End fin_OT.
 
 Fixpoint fin_of_nat (m n : nat) : fin n + {exists p, m = n + p} :=
-  match n as n0 return fin n0 + {exists p, m = n0 + p} with
-  | 0 => inright (ex_intro _ m eq_refl)
-  | S n' =>
-    match m as m0 return fin (S n') + {exists p, m0 = (S n') + p} with
-    | 0 => inleft None
-    | S m' =>
-      match fin_of_nat m' n' with
-      | inleft f => inleft (Some f)
-      | inright pf => inright (let 'ex_intro _ x H := pf in
-                              ex_intro _ x (f_equal S H))
-      end
+  match n with
+    | 0 => inright (ex_intro _ _ eq_refl)
+    | S n' =>
+      match m with
+        | 0 => inleft None
+        | S m' =>
+          match fin_of_nat m' n' with
+            | inleft f => inleft (Some f)
+            | inright pf =>
+              inright (match pf with
+                         | ex_intro _ x H => ex_intro _ x (f_equal _ H)
+                       end)
+          end
     end
   end.
 
-Lemma fin_of_nat_fin_to_nat:
-  forall (n : nat) (a : fin n), fin_of_nat (fin_to_nat a) n = inleft a.
+Lemma fin_of_nat_fin_to_nat :
+  forall (n : nat) (a : fin n),
+    fin_of_nat (fin_to_nat a) n = inleft a.
 Proof.
   induction n; simpl; intuition.
   destruct a; simpl in *; auto.
