@@ -139,17 +139,17 @@ Module Type NatValue.
   Parameter n : nat.
 End NatValue.
 
-Module fin_OT_compat (N : NatValue) <: OrderedType.
-  Definition t := fin N.n.
+Module fin_OT_compat (Import N : NatValue) <: OrderedType.
+  Definition t := fin n.
   Definition eq : t -> t -> Prop := eq.
   Definition lt : t -> t -> Prop := fin_lt.
   Definition eq_refl : forall x : t, eq x x := @eq_refl _.
   Definition eq_sym : forall x y: t, eq x y -> eq y x := @eq_sym _.
   Definition eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z := @eq_trans _.
-  Definition lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z := @fin_lt_trans N.n.
-  Definition lt_not_eq : forall x y : t, lt x y -> ~ eq x y := @fin_lt_not_eq N.n. 
-  Definition compare : forall x y : t, Compare lt eq x y := fin_compare N.n.
-  Definition eq_dec : forall x y : t, {eq x y} + {~ eq x y} := fin_eq_dec N.n.
+  Definition lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z := @fin_lt_trans n.
+  Definition lt_not_eq : forall x y : t, lt x y -> ~ eq x y := @fin_lt_not_eq n. 
+  Definition compare : forall x y : t, Compare lt eq x y := fin_compare n.
+  Definition eq_dec : forall x y : t, {eq x y} + {~ eq x y} := fin_eq_dec n.
 End fin_OT_compat.
 
 Require Import Orders.
@@ -221,16 +221,16 @@ Fixpoint fin_comparison_dec (n : nat) :
              end
   end.
 
-Module fin_OT (N : NatValue) <: OrderedType.
-  Definition t := fin N.n.
-  Definition eq := eq (A := fin N.n).
-  Definition eq_equiv := eq_equivalence (A := fin N.n).
-  Definition lt := fin_lt (n := N.n).
-  Definition lt_strorder := fin_lt_strorder N.n.
-  Definition lt_compat := fin_lt_lt_compat N.n.
-  Definition compare := fun x y => proj1_sig (fin_comparison_dec N.n x y).
-  Definition compare_spec := fun x y => proj2_sig (fin_comparison_dec N.n x y).
-  Definition eq_dec := fin_eq_dec N.n.
+Module fin_OT (Import N : NatValue) <: OrderedType.
+  Definition t := fin n.
+  Definition eq := eq (A := fin n).
+  Definition eq_equiv := eq_equivalence (A := fin n).
+  Definition lt := fin_lt (n := n).
+  Definition lt_strorder := fin_lt_strorder n.
+  Definition lt_compat := fin_lt_lt_compat n.
+  Definition compare := fun x y => proj1_sig (fin_comparison_dec n x y).
+  Definition compare_spec := fun x y => proj2_sig (fin_comparison_dec n x y).
+  Definition eq_dec := fin_eq_dec n.
 End fin_OT.
 
 Fixpoint fin_of_nat (m n : nat) : fin n + {exists p, m = n + p} :=
