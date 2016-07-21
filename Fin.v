@@ -221,19 +221,6 @@ Fixpoint fin_comparison_dec (n : nat) :
              end
   end.
 
-Definition fin_comparison (n : nat) (x y : fin n) : comparison :=
-  match fin_comparison_dec n x y with exist _ cmp _ => cmp end.
-
-Lemma fin_compare_spec :
-  forall (n : nat) (x y : fin n),
-    CompSpec eq fin_lt x y (fin_comparison n x y).
-Proof.
-  intros.
-  unfold fin_comparison.
-  break_match.
-  assumption.
-Qed.
-
 Module fin_OT (N : NatValue) <: OrderedType.
   Definition t := fin N.n.
   Definition eq := eq (A := fin N.n).
@@ -241,8 +228,8 @@ Module fin_OT (N : NatValue) <: OrderedType.
   Definition lt := fin_lt (n := N.n).
   Definition lt_strorder := fin_lt_strorder N.n.
   Definition lt_compat := fin_lt_lt_compat N.n.
-  Definition compare := fin_comparison N.n.
-  Definition compare_spec := fin_compare_spec N.n.
+  Definition compare := fun x y => proj1_sig (fin_comparison_dec N.n x y).
+  Definition compare_spec := fun x y => proj2_sig (fin_comparison_dec N.n x y).
   Definition eq_dec := fin_eq_dec N.n.
 End fin_OT.
 
