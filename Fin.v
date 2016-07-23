@@ -1,7 +1,7 @@
 Require Import List.
 Import ListNotations.
 Require Import StructTact.StructTactics.
-Require Import StructTact.Util.
+Require Import StructTact.ListUtil.
 Require Import OrderedType.
 
 Set Implicit Arguments.
