@@ -1,10 +1,8 @@
-Require Import Arith.
-Require Import Omega.
-Require Import NPeano.
 Require Import List.
 Import ListNotations.
-Require Import Sorting.Permutation.
 Require Import StructTact.StructTactics.
+
+Set Implicit Arguments.
 
 Fixpoint Prefix {A} (l1 : list A) l2 : Prop :=
   match l1, l2 with

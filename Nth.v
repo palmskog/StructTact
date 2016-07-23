@@ -1,11 +1,8 @@
-Require Import Arith.
-Require Import Omega.
-Require Import NPeano.
 Require Import List.
 Import ListNotations.
-Require Import Sorting.Permutation.
 Require Import StructTact.StructTactics.
-Require Import StructTact.ListUtil.
+
+Set Implicit Arguments.
 
 Inductive Nth {A : Type} : list A -> nat -> A -> Prop :=
 | Nth_0 : forall x l, Nth (x :: l) 0 x

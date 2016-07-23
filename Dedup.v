@@ -1,11 +1,8 @@
-Require Import Arith.
-Require Import Omega.
-Require Import NPeano.
 Require Import List.
 Import ListNotations.
-Require Import Sorting.Permutation.
 Require Import StructTact.StructTactics.
 Require Import StructTact.ListTactics.
+Require Import StructTact.ListUtil.
 
 Set Implicit Arguments.
 
@@ -94,29 +91,6 @@ Section dedup.
       eapply in_dedup_was_in; eauto.
   Qed.
 
-  Lemma remove_preserve :
-    forall (x y : A) xs,
-      x <> y ->
-      In y xs ->
-      In y (remove A_eq_dec x xs).
-  Proof.
-    induction xs; intros.
-    - intuition.
-    - simpl in *.
-      concludes.
-      intuition; break_if; subst; try congruence; intuition.
-  Qed.
-
-  Lemma in_remove :
-    forall (x y : A) xs,
-      In y (remove A_eq_dec x xs) ->
-      In y xs.
-  Proof.
-    induction xs; intros.
-    - auto.
-    - simpl in *. break_if; simpl in *; intuition.
-  Qed.
-
   Lemma remove_dedup_comm : forall (x : A) xs,
       remove A_eq_dec x (dedup xs) =
       dedup (remove A_eq_dec x xs).
@@ -126,20 +100,6 @@ Section dedup.
     - simpl. repeat (break_match; simpl); auto using f_equal.
       + exfalso. apply n0. apply remove_preserve; auto.
       + exfalso. apply n. eapply in_remove; eauto.
-  Qed.
-
-  Lemma remove_partition :
-    forall xs (p : A) ys,
-      remove A_eq_dec p (xs ++ p :: ys) = remove A_eq_dec p (xs ++ ys).
-  Proof.
-    induction xs; intros; simpl; break_if; congruence.
-  Qed.
-
-  Lemma remove_not_in : forall (x : A) xs,
-      ~ In x xs ->
-      remove A_eq_dec x xs = xs.
-  Proof.
-    intros. induction xs; simpl in *; try break_if; intuition congruence.
   Qed.
 
   Lemma dedup_partition :

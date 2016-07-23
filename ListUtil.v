@@ -1,16 +1,52 @@
 Require Import Arith.
 Require Import Omega.
-Require Import NPeano.
 Require Import List.
 Import ListNotations.
 Require Import Sorting.Permutation.
 Require Import StructTact.StructTactics.
 Require Import StructTact.ListTactics.
-Require Import StructTact.Dedup.
 
 Set Implicit Arguments.
 
 Notation member := (in_dec eq_nat_dec).
+
+Lemma remove_preserve :
+  forall A A_eq_dec (x y : A) xs,
+      x <> y ->
+      In y xs ->
+      In y (remove A_eq_dec x xs).
+Proof.
+  induction xs; intros.
+  - intuition.
+  - simpl in *.
+    concludes.
+    intuition; break_if; subst; try congruence; intuition.
+Qed.
+
+Lemma in_remove :
+  forall A A_eq_dec (x y : A) xs,
+    In y (remove A_eq_dec x xs) ->
+    In y xs.
+Proof.
+  induction xs; intros.
+  - auto.
+  - simpl in *. break_if; simpl in *; intuition.
+Qed.
+
+Lemma remove_partition :
+  forall A A_eq_dec xs (p : A) ys,
+    remove A_eq_dec p (xs ++ p :: ys) = remove A_eq_dec p (xs ++ ys).
+Proof.
+  induction xs; intros; simpl; break_if; congruence.
+Qed.
+
+Lemma remove_not_in :
+  forall A A_eq_dec (x : A) xs,
+    ~ In x xs ->
+    remove A_eq_dec x xs = xs.
+Proof.
+  intros. induction xs; simpl in *; try break_if; intuition congruence.
+Qed.
 
 Lemma filter_app : forall A (f : A -> bool) xs ys,
     filter f (xs ++ ys) = filter f xs ++ filter f ys.
