@@ -203,14 +203,14 @@ Proof.
   solve_by_inversion.
 Qed.
 
-Fixpoint fin_comparison_dec (n : nat) :
+Fixpoint fin_comparison (n : nat) :
   forall (x y : fin n), { cmp : comparison | CompSpec eq fin_lt x y cmp } :=
   match n with
     | 0 => fun x y : fin 0 => match x with end
     | S n' => fun x y : fin (S n') =>
              match x, y with
                | Some x', Some y' =>
-                 match fin_comparison_dec n' x' y' with
+                 match fin_comparison n' x' y' with
                    | exist _ Lt Hc => exist _ Lt (CompLt _ _ (fin_lt_Some_intro (CompSpec_Lt Hc)))
                    | exist _ Eq Hc => exist _ Eq (CompEq _ _ (CompSpec_Eq_Some Hc))
                    | exist _ Gt Hc => exist _ Gt (CompGt _ _ (fin_lt_Some_intro (CompSpec_Gt Hc)))
@@ -228,8 +228,8 @@ Module fin_OT (Import N : NatValue) <: OrderedType.
   Definition lt := fin_lt (n := n).
   Definition lt_strorder := fin_lt_strorder n.
   Definition lt_compat := fin_lt_lt_compat n.
-  Definition compare := fun x y => proj1_sig (fin_comparison_dec n x y).
-  Definition compare_spec := fun x y => proj2_sig (fin_comparison_dec n x y).
+  Definition compare := fun x y => proj1_sig (fin_comparison n x y).
+  Definition compare_spec := fun x y => proj2_sig (fin_comparison n x y).
   Definition eq_dec := fin_eq_dec n.
 End fin_OT.
 
