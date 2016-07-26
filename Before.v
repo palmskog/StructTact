@@ -60,11 +60,10 @@ Section before.
   Definition before_func_dec :
     forall f g (l : list A),
       {before_func f g l} + {~ before_func f g l}.
-  Proof.
     intros. induction l; simpl in *.
     - intuition.
     - destruct (f a); destruct (g a); intuition.
-  Qed.
+  Defined.
 
   Lemma before_func_app :
     forall f g l x,
