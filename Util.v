@@ -12,5 +12,7 @@ Require Export StructTact.RemoveAll.
 Require Export StructTact.Subseq.
 Require Export StructTact.Take.
 
+Require Export StructTact.Update.
+
 Require Export StructTact.BoolUtil.
 Require Export StructTact.PropUtil.
