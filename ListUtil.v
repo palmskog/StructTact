@@ -825,5 +825,4 @@ Section list_util.
         apply snd_eq_not_in_map with (m := b); auto.
       * apply IHnms; auto.
   Qed.
-
 End list_util.
