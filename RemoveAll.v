@@ -1,6 +1,7 @@
 Require Import List.
 Import ListNotations.
 Require Import StructTact.StructTactics.
+Require Import StructTact.ListTactics.
 Require Import StructTact.ListUtil.
 Require Import StructTact.Before.
 
@@ -88,6 +89,166 @@ Section remove_all.
     induction l; intros; simpl in *; intuition;
       pose proof remove_all_cons xs a l; subst; intuition;
         repeat find_rewrite; simpl in *; intuition.
+  Qed.
+
+  Lemma NoDup_remove_all :
+    forall l l',
+    NoDup l' ->
+    NoDup (remove_all l l').
+  Proof.
+    intros.
+    induction l'.
+    - rewrite remove_all_nil; auto.
+    - invc_NoDup.
+      concludes.
+      pose proof remove_all_cons l a l'.
+      break_or_hyp; break_and; find_rewrite; auto.
+      constructor; auto.
+      intro.
+      find_apply_lem_hyp in_remove_all_was_in; auto.
+  Qed.
+
+  Lemma remove_all_not_in_eq :
+    forall l l' a,
+    ~ In a l' ->
+    remove_all (a :: l) l' = remove_all l l'.
+  Proof.
+    intros.
+    destruct l'; simpl in *; auto.
+    break_if.
+    - subst; intuition.
+    - assert (~ In a l'); auto.
+      rewrite remove_not_in; auto.
+   Qed.
+
+  Lemma remove_all_NoDup_remove :
+    forall l l' l0 l1 a,
+     NoDup l' ->
+     remove_all l l' = l0 ++ a :: l1 ->
+     remove_all l (remove A_eq_dec a l') = l0 ++ l1.
+  Proof.
+    induction l'; intros; simpl in *.
+    - find_rewrite_lem remove_all_nil.
+      destruct l0; simpl in *; match goal with H: [] = _ |- _ => contradict H end; auto using nil_cons.
+    - invc_NoDup.
+      break_if.
+      * subst.
+        rewrite remove_not_in; auto.
+        pose proof remove_all_cons l a l'.
+        break_or_hyp; break_and.
+        + find_rewrite.
+          symmetry in H.
+          specialize (IHl' _ _ _ H4 H).
+          rewrite remove_not_in in IHl'; auto.
+        + destruct l0; simpl in *.
+          -- find_rewrite.
+             find_injection; auto.
+          -- find_rewrite.
+             find_injection.
+             assert (In a (remove_all l l')).
+               rewrite <- H.
+               apply in_or_app.
+               right; left.
+               reflexivity.
+             find_apply_lem_hyp in_remove_all_was_in.
+             contradict H3; auto.
+      * pose proof remove_all_cons l a l'.
+        break_or_hyp; break_and.
+        + rewrite H in H0.
+          pose proof remove_all_cons l a (remove A_eq_dec a0 l').
+          break_or_hyp; break_and.
+          -- rewrite H2; auto.
+          -- contradict H5; auto.
+        + find_rewrite.
+          destruct l0; simpl in *.
+         -- find_injection; intuition.
+         -- find_injection.
+            symmetry in H.
+            specialize (IHl' _ _ _ H4 H).
+            rewrite <- IHl'.
+            pose proof remove_all_cons l a (remove A_eq_dec a0 l').
+            break_or_hyp; break_and; intuition.
+  Qed.
+
+  Lemma remove_all_NoDup_split :
+    forall l l' l0 l1 a,
+      NoDup l' ->
+      remove_all l l' = l0 ++ a :: l1 ->
+      remove_all (a :: l) l' = l0 ++ l1.
+  Proof.
+    intros.
+    destruct l'; simpl in *.
+    - find_rewrite_lem remove_all_nil.
+      destruct l0; simpl in *; match goal with H: [] = _ |- _ => contradict H end; auto using nil_cons.
+    - invc_NoDup.
+      break_if.
+      * subst.
+        rewrite remove_not_in; auto.
+        destruct l0; simpl in *.
+        + pose proof remove_all_cons l a0 l'.
+          break_or_hyp; break_and; auto.
+          -- rewrite H in H0.
+             assert (In a0 (remove_all l l')).
+               rewrite H0.
+               left.
+               reflexivity.
+             pose proof in_remove_all_not_in _ _ _ H2 H1.
+             contradict H5.
+          -- find_rewrite.
+             find_injection.
+             reflexivity.
+        + pose proof remove_all_cons l a0 l'.
+          break_or_hyp; break_and; auto.
+          -- find_rewrite.
+             assert (In a0 (remove_all l l')).
+               rewrite <- H.
+               right.
+               apply in_or_app.
+               right.
+               left.
+               reflexivity.
+             pose proof in_remove_all_not_in _ _ _ H2 H1.
+             contradict H5.
+          -- rewrite H0 in H.
+             find_injection.
+             assert (In a0 (remove_all l l')).
+               rewrite <- H.
+               apply in_or_app.
+               right; left.
+               reflexivity.
+             find_apply_lem_hyp in_remove_all_was_in.
+             contradict H3; assumption.
+      * pose proof remove_all_cons l a0 l'.
+        break_or_hyp; break_and.
+        + find_rewrite.
+          rewrite H in H0.
+          pose proof remove_all_cons l a0 (remove A_eq_dec a l').
+          break_or_hyp; break_and.
+          -- rewrite H2.
+             apply remove_all_NoDup_remove; auto.
+          -- contradict H5; auto.
+        + find_rewrite.
+          pose proof remove_all_cons l a0 (remove A_eq_dec a l').
+          break_or_hyp; break_and.
+          -- contradict H1; auto.
+          -- rewrite H2.
+             destruct l0.
+               simpl in *.
+               find_injection.
+               congruence.
+             simpl in *.
+             find_injection.
+             erewrite remove_all_NoDup_remove; eauto.
+  Qed.
+
+  Lemma remove_all_in_split_eq :
+    forall l l' l0 l1 a,
+      remove_all (a :: l) (l' ++ a :: l0) = l1 ->
+      remove_all (a :: l) (a :: l' ++ l0) = l1.
+  Proof.
+    intros; simpl in *.
+    find_rewrite_lem remove_partition.
+    break_if; intuition.
   Qed.
 End remove_all.
 Arguments in_remove_all_was_in : clear implicits.
