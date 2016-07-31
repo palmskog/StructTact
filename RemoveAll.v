@@ -66,31 +66,6 @@ Section remove_all.
     specialize (IHys a0 (remove A_eq_dec a l)). intuition.
   Qed.
 
-  Lemma before_remove_all :
-    forall x y l ys,
-      before x y (remove_all ys l) ->
-      ~ In y ys ->
-      before x y l.
-  Proof.
-    induction l; intros; simpl in *; intuition.
-    - rewrite remove_all_nil in *. simpl in *. intuition.
-    - pose proof remove_all_cons ys a l. intuition.
-      + repeat find_rewrite. right. intuition eauto.
-        subst; intuition.
-      + repeat find_rewrite. simpl in *. intuition eauto.
-  Qed.
-
-  Lemma before_remove_all_if :
-    forall x y l xs,
-      before x y l ->
-      ~ In x xs ->
-      before x y (remove_all xs l).
-  Proof.
-    induction l; intros; simpl in *; intuition;
-      pose proof remove_all_cons xs a l; subst; intuition;
-        repeat find_rewrite; simpl in *; intuition.
-  Qed.
-
   Lemma NoDup_remove_all :
     forall l l',
     NoDup l' ->
@@ -118,43 +93,55 @@ Section remove_all.
     - find_rewrite_lem remove_all_nil.
       destruct l0; simpl in *; match goal with H: [] = _ |- _ => contradict H end; auto using nil_cons.
     - invc_NoDup.
-      break_if.
-      * subst.
-        rewrite remove_not_in; auto.
+      break_if; subst.
+      * rewrite remove_not_in; auto.
         pose proof remove_all_cons l a l'.
         break_or_hyp; break_and.
-        + find_rewrite.
-          symmetry in H.
-          specialize (IHl' _ _ _ H4 H).
+        + find_rewrite.          
+          match goal with H0: NoDup _, H1: _ = remove_all _ _ |- _ => specialize (IHl' _ _ _ H0 (eq_sym H1)) end.
           rewrite remove_not_in in IHl'; auto.
-        + destruct l0; simpl in *.
-          -- find_rewrite.
-             find_injection; auto.
-          -- find_rewrite.
-             find_injection.
-             assert (In a (remove_all l l')).
-               rewrite <- H.
-               apply in_or_app.
-               right; left.
-               reflexivity.
-             find_apply_lem_hyp in_remove_all_was_in.
-             contradict H3; auto.
+        + destruct l0; simpl in *; find_rewrite; find_injection; auto.
+          assert (In a (remove_all l l')).
+            match goal with H: _ = remove_all _ _ |- _ => rewrite <- H end.
+            apply in_or_app.
+            right; left; auto.
+          find_apply_lem_hyp in_remove_all_was_in.
+          intuition.
       * pose proof remove_all_cons l a l'.
-        break_or_hyp; break_and.
-        + rewrite H in H0.
+        break_or_hyp; break_and; find_rewrite.
+        + pose proof remove_all_cons l a (remove A_eq_dec a0 l').
+          break_or_hyp; break_and; intuition.
+          aggressive_rewrite_goal; auto.
+        + destruct l0; simpl in *; find_injection; intuition.
+          match goal with H0: NoDup _, H1: _ = remove_all _ _ |- _ => specialize (IHl' _ _ _ H0 (eq_sym H1)) end.
+          rewrite <- IHl'.
           pose proof remove_all_cons l a (remove A_eq_dec a0 l').
-          break_or_hyp; break_and.
-          -- rewrite H2; auto.
-          -- contradict H5; auto.
-        + find_rewrite.
-          destruct l0; simpl in *.
-         -- find_injection; intuition.
-         -- find_injection.
-            symmetry in H.
-            specialize (IHl' _ _ _ H4 H).
-            rewrite <- IHl'.
-            pose proof remove_all_cons l a (remove A_eq_dec a0 l').
-            break_or_hyp; break_and; intuition.
+          break_or_hyp; break_and; intuition.
+  Qed.
+
+  Lemma before_remove_all :
+    forall x y l ys,
+      before x y (remove_all ys l) ->
+      ~ In y ys ->
+      before x y l.
+  Proof.
+    induction l; intros; simpl in *; intuition.
+    - rewrite remove_all_nil in *. simpl in *. intuition.
+    - pose proof remove_all_cons ys a l. intuition.
+      + repeat find_rewrite. right. intuition eauto.
+        subst; intuition.
+      + repeat find_rewrite. simpl in *. intuition eauto.
+  Qed.
+
+  Lemma before_remove_all_if :
+    forall x y l xs,
+      before x y l ->
+      ~ In x xs ->
+      before x y (remove_all xs l).
+  Proof.
+    induction l; intros; simpl in *; intuition;
+      pose proof remove_all_cons xs a l; subst; intuition;
+        repeat find_rewrite; simpl in *; intuition.
   Qed.
 End remove_all.
 Arguments in_remove_all_was_in : clear implicits.
