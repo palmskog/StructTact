@@ -765,9 +765,9 @@ Section list_util.
   Qed.
 
   Lemma Permutation_map_fst :
-    forall l l',
+    forall l l' : list (A * B),
       Permutation l l' ->
-      Permutation (map (fun nm : A * B => fst nm) l) (map (fun nm : A * B => fst nm) l').
+      Permutation (map fst l) (map fst l').
   Proof.
     induction l; intros; simpl in *.
     - find_apply_lem_hyp Permutation_nil.
@@ -789,10 +789,10 @@ Section list_util.
      Qed.
 
   Lemma snd_eq_not_in_map :
-    forall l n m,
+    forall (l : list (A * B)) n m,
       (forall nm, In nm l -> snd nm = m) ->
       ~ In (n, m) l ->
-      ~ In n (map (fun nm : A * B => fst nm) l).
+      ~ In n (map fst l).
   Proof.
     intros.
     induction l; simpl in *; auto.
@@ -809,10 +809,10 @@ Section list_util.
   Qed.
 
   Lemma NoDup_map_snd_fst :
-    forall nms,
+    forall nms : list (A * B),
       NoDup nms ->
       (forall nm nm', In nm nms -> In nm' nms -> snd nm = snd nm') ->
-      NoDup (map (fun nm : A * B => fst nm) nms).
+      NoDup (map fst nms).
   Proof.
     intros.
     induction nms; simpl in *.
