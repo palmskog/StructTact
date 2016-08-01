@@ -30,29 +30,29 @@ Fixpoint filter_rel {A : Type} {rel : relation A} (A_rel_dec : forall x y : A, {
    | y :: tl => if A_rel_dec x y then y :: filter_rel A_rel_dec x tl else filter_rel A_rel_dec x tl
   end.
 
-Definition map_fst {A B : Type} (a : A) := map (fun (b : B) => (a, b)).
+Definition map2fst {A B : Type} (a : A) := map (fun (b : B) => (a, b)).
 
-Definition map_snd {A B : Type} (b : B) := map (fun (a : A) => (a, b)).
+Definition map2snd {A B : Type} (b : B) := map (fun (a : A) => (a, b)).
 
 Require Import mathcomp.ssreflect.ssreflect.
 
 Section update2.
 
-Variable A B : Type.
-Variable rel : relation A.
+Variables A B : Type.
+Variable R : relation A.
 
 Hypothesis A_eq_dec : forall x y : A, {x = y} + {x <> y}.
-Hypothesis A_rel_dec : forall x y : A, {rel x y} + {~ rel x y}.
+Hypothesis R_dec : forall x y : A, {R x y} + {~ R x y}.
   
 Lemma filter_rel_related :
   forall n n' ns,
-  In n' (filter_rel A_rel_dec n ns) -> 
-  In n' ns /\ rel n n'.
+  In n' (filter_rel R_dec n ns) ->
+  In n' ns /\ R n n'.
 Proof.
 move => n n' ns H_in.
 elim: ns H_in => //=.
 move => a l IH.
-case A_rel_dec => H_dec H_in.
+case R_dec => H_dec H_in.
   case: H_in => H_in.
     rewrite H_in.
     rewrite H_in in H_dec.
@@ -71,13 +71,13 @@ Qed.
 Lemma related_filter_rel : 
   forall n n' ns,
     In n' ns -> 
-    rel n n' ->
-    In n' (filter_rel A_rel_dec n ns).
+    R n n' ->
+    In n' (filter_rel R_dec n ns).
 Proof.
 move => n n' ns H_in H_adj.
 elim: ns H_in => //=.
 move => a l IH H_in.
-case A_rel_dec => H_dec.
+case R_dec => H_dec.
   case: H_in => H_in; first by left.
   concludes.
   by right.
@@ -88,13 +88,13 @@ Qed.
 Lemma not_in_not_in_filter_rel :
   forall ns n h,
     ~ In n ns ->
-    ~ In n (filter_rel A_rel_dec h ns).
+    ~ In n (filter_rel R_dec h ns).
 Proof.
 elim => //=.
 move => n' ns IH n h H_in.
 have H_neq: n' <> n by move => H_neq; case: H_in; left.
 have H_not_in: ~ In n ns by move => H_in'; case: H_in; right.
-case A_rel_dec => H_dec; last exact: IH.
+case R_dec => H_dec; last exact: IH.
 move => H_in'.
 case: H_in' => H_in' //.
 contradict H_in'.
@@ -104,24 +104,24 @@ Qed.
 Lemma NoDup_filter_rel:
   forall h ns,
     NoDup ns ->
-    NoDup (filter_rel A_rel_dec h ns).
+    NoDup (filter_rel R_dec h ns).
 Proof.
 move => h m.
 elim => //=; first exact: NoDup_nil.
 move => n ns H_in H_nd.
-case A_rel_dec => H_dec //.
+case R_dec => H_dec //.
 apply NoDup_cons.
 exact: not_in_not_in_filter_rel.
 Qed.
 
-Lemma filter_rel_self_eq {irreflexive_rel : Irreflexive rel} :
+Lemma filter_rel_self_eq {irreflexive_R : Irreflexive R} :
   forall ns0 ns1 h,
-  filter_rel A_rel_dec h (ns0 ++ h :: ns1) = filter_rel A_rel_dec h (ns0 ++ ns1).
+  filter_rel R_dec h (ns0 ++ h :: ns1) = filter_rel R_dec h (ns0 ++ ns1).
 Proof.
 elim => [|n ns0 IH] ns1 h /=.
-  case (A_rel_dec _ _) => /= H_dec //.
-  by apply irreflexive_rel in H_dec.
-case (A_rel_dec _ _) => /= H_dec //.
+  case (R_dec _ _) => /= H_dec //.
+  by apply irreflexive_R in H_dec.
+case (R_dec _ _) => /= H_dec //.
 by rewrite IH.
 Qed.
 
@@ -180,7 +180,7 @@ Qed.
 
 Lemma collate_not_in_eq :
   forall h' h (f : A -> A -> list B) l,
- ~ In h (map (fun nm : A * B => fst nm) l) -> 
+ ~ In h (map fst l) ->
   collate A_eq_dec h' f l h' h = f h' h.
 Proof.
 move => h' h f l.
@@ -219,7 +219,7 @@ Qed.
 
 Lemma collate_not_in :
   forall h h' l1 l2 (f : A -> A -> list B),
-  ~ In h' (map (fun nm : A * B => fst nm) l1) ->
+  ~ In h' (map fst l1) ->
   collate A_eq_dec h f (l1 ++ l2) h h' = collate A_eq_dec h f l2 h h'.
 Proof.
 move => h h' l1 l2 f H_in.
@@ -236,7 +236,7 @@ Qed.
 
 Lemma collate_not_in_mid :
  forall h h' l1 l2 (f : A -> A -> list B) m,
-   ~ In h (map (fun nm : A * B => fst nm) (l1 ++ l2)) ->
+   ~ In h (map fst (l1 ++ l2)) ->
    collate A_eq_dec h' (update2 A_eq_dec f h' h (f h' h ++ [m])) (l1 ++ l2) = collate A_eq_dec h' f (l1 ++ (h, m) :: l2).
 Proof.
 move => h h' l1 l2 f m H_in.
@@ -269,9 +269,9 @@ case (sumbool_and _ _) => H_dec' //.
 by move: H_dec' => [H_eq H_eq'].
 Qed.
 
-Lemma NoDup_perm_collate_eq :
+Lemma NoDup_Permutation_collate_eq :
   forall h (f : A -> A -> list B) l l',
-    NoDup (map (fun nm => fst nm) l) ->
+    NoDup (map fst l) ->
     Permutation l l' ->
     collate A_eq_dec h f l = collate A_eq_dec h f l'.
 Proof.
@@ -304,17 +304,17 @@ suff H_pm': Permutation (map (fun nm : A * B => fst nm) l) (map (fun nm : A * B 
 exact: Permutation_map_fst.
 Qed.
 
-Lemma collate_map_pair_not_related :
+Lemma collate_map2snd_not_related :
   forall m n h ns (f : A -> A -> list B),
-    ~ rel h n ->
-    collate A_eq_dec h f (map_snd m (filter_rel A_rel_dec h ns)) h n = f h n.
+    ~ R h n ->
+    collate A_eq_dec h f (map2snd m (filter_rel R_dec h ns)) h n = f h n.
 Proof.
 move => m n h ns f H_adj.
 move: f.
 elim: ns => //.
 move => n' ns IH f.
 rewrite /=.
-case (A_rel_dec _ _) => H_dec' //.
+case (R_dec _ _) => H_dec' //.
 rewrite /=.
 rewrite IH.
 rewrite /update2.
@@ -323,17 +323,17 @@ move: H_and => [H_and H_and'].
 by rewrite -H_and' in H_adj.
 Qed.
 
-Lemma collate_map_snd_notin :
-  forall m' n h ns (f : A -> A -> list B),
+Lemma collate_map2snd_not_in :
+  forall m n h ns (f : A -> A -> list B),
     ~ In n ns ->
-    collate A_eq_dec h f (map_snd m' (filter_rel A_rel_dec h ns)) h n = f h n.
+    collate A_eq_dec h f (map2snd m (filter_rel R_dec h ns)) h n = f h n.
 Proof.
-move => m' n h ns f.
+move => m n h ns f.
 move: f.
 elim: ns => //.
 move => n' ns IH f H_in.
 rewrite /=.
-case (A_rel_dec _ _) => H_dec'.
+case (R_dec _ _) => H_dec'.
   rewrite /=.
   rewrite IH.
     rewrite /update2.
@@ -350,26 +350,26 @@ case: H_in.
 by right.
 Qed.
 
-Lemma collate_map_snd_notin_remove_all :
-  forall m n h ns (f : A -> A -> list B) failed,
+Lemma collate_map2snd_not_in_remove_all :
+  forall m n h ns (f : A -> A -> list B) ns',
     ~ In n ns ->
-    collate A_eq_dec h f (map_snd m (filter_rel A_rel_dec h (remove_all A_eq_dec failed ns))) h n = f h n.
+    collate A_eq_dec h f (map2snd m (filter_rel R_dec h (remove_all A_eq_dec ns' ns))) h n = f h n.
 Proof.
-move => m n h ns f failed H_in.
-apply collate_map_snd_notin.
+move => m n h ns f ns' H_in.
+apply collate_map2snd_not_in.
 move => H_ex.
 by find_apply_lem_hyp in_remove_all_was_in.
 Qed.
 
-Lemma collate_map_snd_live_related :
-  forall m n h ns (f : A -> A -> list B) failed,
-    ~ In n failed ->
-    rel h n ->
+Lemma collate_map2snd_not_in_related :
+  forall m n h ns (f : A -> A -> list B) ns',
+    ~ In n ns' ->
+    R h n ->
     In n ns ->
     NoDup ns ->
-    collate A_eq_dec h f (map_snd m (filter_rel A_rel_dec h (remove_all A_eq_dec failed ns))) h n = f h n ++ [m].
+    collate A_eq_dec h f (map2snd m (filter_rel R_dec h (remove_all A_eq_dec ns' ns))) h n = f h n ++ [m].
 Proof.
-move => m n h ns f failed H_in H_adj.
+move => m n h ns f ns' H_in H_adj.
 move: f.
 elim: ns => //.
 move => n' ns IH f H_in' H_nd.
@@ -377,39 +377,39 @@ inversion H_nd; subst.
 case: H_in' => H_in'.
   rewrite H_in'.
   subst.
-  have H_ra := remove_all_cons A_eq_dec failed n ns.
+  have H_ra := remove_all_cons A_eq_dec ns' n ns.
   break_or_hyp; break_and => //.
   find_rewrite.
   rewrite /=.
-  case (A_rel_dec _ _) => H_dec' //=.
-  rewrite collate_map_snd_notin_remove_all //.
+  case (R_dec _ _) => H_dec' //=.
+  rewrite collate_map2snd_not_in_remove_all //.
   rewrite /update2.
   case (sumbool_and _ _) => H_sumb //.
   by case: H_sumb.    
 have H_neq: n' <> n by move => H_eq; rewrite -H_eq in H_in'. 
-have H_ra := remove_all_cons A_eq_dec failed n' ns.
+have H_ra := remove_all_cons A_eq_dec ns' n' ns.
 break_or_hyp; break_and; first by find_rewrite; rewrite IH.
 find_rewrite.
 rewrite /=.
-case A_rel_dec => /= H_dec'; rewrite IH //.
+case R_dec => /= H_dec'; rewrite IH //.
 rewrite /update2.
 case (sumbool_and _ _) => H_sumb //.
 by move: H_sumb => [H_eq H_eq'].
 Qed.
 
-Lemma collate_map_snd_in_failed :
-  forall m' n h ns (f : A -> A -> list B) failed,
-    In n failed ->
-    collate A_eq_dec h f (map_snd m' (filter_rel A_rel_dec h (remove_all A_eq_dec failed ns))) h n = f h n.
+Lemma collate_map2snd_in :
+  forall m n h ns (f : A -> A -> list B) ns',
+    In n ns' ->
+    collate A_eq_dec h f (map2snd m (filter_rel R_dec h (remove_all A_eq_dec ns' ns))) h n = f h n.
 Proof.
-move => m' n h ns f failed.
+move => m n h ns f ns'.
 move: f.
 elim: ns => /=; first by rewrite remove_all_nil.
 move => n' ns IH f H_in.
-have H_ra := remove_all_cons A_eq_dec failed n' ns.
+have H_ra := remove_all_cons A_eq_dec ns' n' ns.
 break_or_hyp; break_and; find_rewrite; first by rewrite IH.
 rewrite /=.
-case A_rel_dec => H_dec'; last by rewrite IH.
+case R_dec => H_dec'; last by rewrite IH.
 rewrite /= IH //.
 rewrite /update2.
 case (sumbool_and _ _) => H_and //.
@@ -417,14 +417,14 @@ move: H_and => [H_and H_and'].
 by rewrite -H_and' in H_in.
 Qed.
 
-Lemma collate_map_pair_live_related_alt :
+Lemma collate_map2snd_related_not_in :
   forall a n h ns (f : A -> A -> list B),
-    rel h n ->
+    R h n ->
     ~ In n ns ->
-    collate A_eq_dec h f (map_snd a (filter_rel A_rel_dec h (n :: ns))) h n = f h n ++ [a].
+    collate A_eq_dec h f (map2snd a (filter_rel R_dec h (n :: ns))) h n = f h n ++ [a].
 Proof.
 move => a n h ns f H_adj H_in /=.
-case A_rel_dec => /= H_dec // {H_dec}.
+case R_dec => /= H_dec // {H_dec}.
 move: f n h H_in H_adj.
 elim: ns  => //=.
   move => f n h H_in.
@@ -434,11 +434,11 @@ elim: ns  => //=.
 move => n' ns IH f n h H_in H_adj.
 have H_in': ~ In n ns by move => H_in'; case: H_in; right.
 have H_neq: n <> n' by move => H_eq; case: H_in; left.
-case A_rel_dec => /= H_dec; last by rewrite IH.
+case R_dec => /= H_dec; last by rewrite IH.
 rewrite {3}/update2.
 case sumbool_and => H_and; first by move: H_and => [H_and H_and'].
 have IH' := IH f.
-rewrite collate_map_snd_notin //.
+rewrite collate_map2snd_not_in //.
 rewrite /update2.
 case sumbool_and => H_and'; first by move: H_and' => [H_and' H_and'']; rewrite H_and'' in H_neq.
 case sumbool_and => H_and'' //.
@@ -448,14 +448,14 @@ Qed.
 Lemma in_collate_in :
   forall ns n h (f : A -> A -> list B) a,
   ~ In n ns ->
-  In a ((collate A_eq_dec h f (map_snd a (filter_rel A_rel_dec h ns))) h n) ->
+  In a (collate A_eq_dec h f (map2snd a (filter_rel R_dec h ns)) h n) ->
   In a (f h n).
 Proof.
 elim => //=.
 move => n' ns IH n h f mg H_in.
 have H_neq: n' <> n by move => H_eq; case: H_in; left.
 have H_in': ~ In n ns by move => H_in'; case: H_in; right.
-case A_rel_dec => H_dec; last exact: IH.
+case R_dec => H_dec; last exact: IH.
 rewrite /=.
 set up2 := update2 _ _ _ _ _.
 have H_eq_f: up2 h n = f h n.
@@ -465,15 +465,15 @@ rewrite (collate_f_eq _ _ _ _ _ _ H_eq_f).
 exact: IH.
 Qed.
 
-Lemma not_in_map_pair :
+Lemma not_in_map2snd :
   forall n h (m : B) ns,
     ~ In n ns ->
-    ~ In (n, m) (map_snd m (filter_rel A_rel_dec h ns)).
+    ~ In (n, m) (map2snd m (filter_rel R_dec h ns)).
 Proof.
 move => n h m.
 elim => //=.
 move => n' ns IH H_in.
-case (A_rel_dec _ _) => H_dec.
+case (R_dec _ _) => H_dec.
   rewrite /=.
   move => H_in'.
   case: H_in' => H_in'.
@@ -490,10 +490,10 @@ case: H_in.
 by right.
 Qed.
 
-Lemma NoDup_map_snd :
+Lemma NoDup_map2snd :
   forall h (m : B) ns,
     NoDup ns ->
-    NoDup (map_snd m (filter_rel A_rel_dec h ns)).
+    NoDup (map2snd m (filter_rel R_dec h ns)).
 Proof.
 move => h m.
 elim => //=.
@@ -501,25 +501,25 @@ elim => //=.
   exact: NoDup_nil.
 move => n ns IH H_in.
 inversion H_in.
-case (A_rel_dec _ _) => H_dec.
+case (R_dec _ _) => H_dec.
   rewrite /=.
   apply NoDup_cons.
     apply IH in H2.
-    exact: not_in_map_pair.
+    exact: not_in_map2snd.
   exact: IH.
 exact: IH.
 Qed.
 
-Lemma in_for_msg :
+Lemma in_map2snd_snd :
   forall h (m : B) ns nm,
-  In nm (map_snd m (filter_rel A_rel_dec h ns)) ->
+  In nm (map2snd m (filter_rel R_dec h ns)) ->
   snd nm = m.
 Proof.
 move => h m.
 elim => //.
 move => n l IH.
 case => /= n' m'.
-case (A_rel_dec _ _) => H_dec.
+case (R_dec _ _) => H_dec.
   rewrite /=.
   move => H_in.
   case: H_in => H_in; first by inversion H_in.
@@ -530,15 +530,15 @@ have ->: m' = snd (n', m') by [].
 exact: IH.
 Qed.
 
-Lemma in_map_snd_related_in :
+Lemma in_map2snd_related_in :
   forall (m : B) ns n h,
-  In (n, m) (map_snd m (filter_rel A_rel_dec h ns)) ->
-  rel h n /\ In n ns.
+  In (n, m) (map2snd m (filter_rel R_dec h ns)) ->
+  R h n /\ In n ns.
 Proof.
 move => m.
 elim => //=.
 move => n ns IH n' h.
-case (A_rel_dec _ _) => /= H_dec.
+case (R_dec _ _) => /= H_dec.
   move => H_in.
   case: H_in => H_in.
     inversion H_in.
@@ -604,14 +604,14 @@ by case sumbool_and => H_dec; first by break_and; find_rewrite.
 Qed.
 
 Lemma collate_ls_live_related : 
-  forall ns (f : A -> A -> list B) failed h mg from,
-  ~ In from failed ->
-  rel h from ->
+  forall ns (f : A -> A -> list B) ns' h mg from,
+  ~ In from ns' ->
+  R h from ->
   In from ns ->
   NoDup ns ->     
-  collate_ls A_eq_dec (filter_rel A_rel_dec h (remove_all A_eq_dec failed ns)) f h mg from h = f from h ++ [mg].
+  collate_ls A_eq_dec (filter_rel R_dec h (remove_all A_eq_dec ns' ns)) f h mg from h = f from h ++ [mg].
 Proof.
-move => ns f failed h mg from.
+move => ns f ns' h mg from.
 move => H_f H_adj H_in H_nd.
 rewrite collate_ls_NoDup_in //; first by apply: NoDup_filter_rel; exact: NoDup_remove_all.
 apply related_filter_rel => //.
@@ -648,16 +648,16 @@ Qed.
 
 Lemma collate_ls_not_related :
   forall ns (f : A -> A -> list B) n h mg,
-    ~ rel h n ->
-    collate_ls A_eq_dec (filter_rel A_rel_dec h ns) f h mg n h = f n h.
+    ~ R h n ->
+    collate_ls A_eq_dec (filter_rel R_dec h ns) f h mg n h = f n h.
 Proof.
 elim => //=.
 move => n' ns IH f n h mg H_adj.
 case (A_eq_dec n n') => H_dec.
   rewrite -H_dec.
-  case A_rel_dec => H_dec' //=.
+  case R_dec => H_dec' //=.
   by rewrite IH.
-case A_rel_dec => H_dec' /=; last by rewrite IH.
+case R_dec => H_dec' /=; last by rewrite IH.
 rewrite IH //.
 rewrite /update2.
 by case sumbool_and => H_and; first by break_and; find_rewrite.
@@ -666,19 +666,19 @@ Qed.
 Lemma collate_ls_not_in_related :
   forall ns (f : A -> A -> list B) n h mg,
     ~ In n ns ->
-    collate_ls A_eq_dec (filter_rel A_rel_dec h ns) f h mg n h = f n h.
+    collate_ls A_eq_dec (filter_rel R_dec h ns) f h mg n h = f n h.
 Proof.
 move => ns f n h mg H_in.
 rewrite collate_ls_not_in //.
 exact: not_in_not_in_filter_rel.
 Qed.
 
-Lemma collate_ls_not_in_related_exclude :
-  forall ns (f : A -> A -> list B) n h mg failed,
+Lemma collate_ls_not_in_related_remove_all :
+  forall ns (f : A -> A -> list B) n h mg ns',
     ~ In n ns ->
-    collate_ls A_eq_dec (filter_rel A_rel_dec h (remove_all A_eq_dec failed ns)) f h mg n h = f n h.
+    collate_ls A_eq_dec (filter_rel R_dec h (remove_all A_eq_dec ns' ns)) f h mg n h = f n h.
 Proof.
-move => ns f n h mg failed H_in.
+move => ns f n h mg ns' H_in.
 rewrite collate_ls_not_in //.
 apply: not_in_not_in_filter_rel.
 move => H_in'.
@@ -687,19 +687,19 @@ move: H_in'.
 exact: in_remove_all_was_in.
 Qed.
 
-Lemma collate_ls_in_excluded :
-  forall mg n h ns (f : A -> A -> list B) failed,
-    In n failed ->
-    collate_ls A_eq_dec (filter_rel A_rel_dec h (remove_all A_eq_dec failed ns)) f h mg n h = f n h.
+Lemma collate_ls_in_remove_all :
+  forall mg n h ns (f : A -> A -> list B) ns',
+    In n ns' ->
+    collate_ls A_eq_dec (filter_rel R_dec h (remove_all A_eq_dec ns' ns)) f h mg n h = f n h.
 Proof.
-move => mg n h ns f failed H_in.
+move => mg n h ns f ns' H_in.
 move: f.
 elim: ns; first by rewrite remove_all_nil.
 move => n' ns IH f.
-have H_cn := remove_all_cons A_eq_dec failed n' ns.
+have H_cn := remove_all_cons A_eq_dec ns' n' ns.
 break_or_hyp; break_and; find_rewrite; first by rewrite IH.
 rewrite /=.
-case A_rel_dec => H_dec //=.
+case R_dec => H_dec //=.
 have H_neq: n' <> n by move => H_eq; rewrite -H_eq in H_in.
 rewrite IH.
 rewrite /update2.
@@ -766,7 +766,7 @@ case (A_eq_dec h' from) => H_dec; case (A_eq_dec h to) => H_dec'.
   by break_if; first by break_and.
 Qed.
 
-Lemma NoDup_perm_collate_ls_eq :
+Lemma NoDup_Permutation_collate_ls_eq :
   forall l (f : A -> A -> list B) h m l',
     NoDup l ->
     Permutation l l' ->
